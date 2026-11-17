@@ -1,35 +1,39 @@
 import AuthForm from '../components/AuthForm';
 
-// Landing Page & Auth : Split-Layout immersif Obsidian & Spring Emerald
+// Page de bienvenue & authentification en Split-Layout (Obsidian & Spring Emerald)
+// Mobile : Panneau supérieur bien dosé au ratio 3:2 avec aération et élégance
+// Desktop : Split 50/50 plein écran
 function AuthPage({ onLoginSuccess }) {
   return (
     <div className="min-vh-100 d-flex flex-column flex-lg-row bg-white">
-      {/* Panneau Gauche : Ambiance Obsidian (#090D10) & Spring Emerald */}
+      {/* Panneau Brand & Expérience
+          Sur mobile : donne une présence affirmée (ratio ~3:2) avec un bon confort visuel
+          Sur desktop : 50% de la largeur, pleine hauteur */}
       <div
-        className="col-12 col-lg-6 text-white p-4 p-md-5 d-flex flex-column justify-content-between position-relative overflow-hidden"
+        className="col-12 col-lg-6 text-white px-4 py-4 p-sm-5 d-flex flex-column justify-content-between position-relative overflow-hidden"
         style={{
           backgroundColor: '#090D10',
-          minHeight: '380px',
+          minHeight: '260px',
         }}
       >
-        {/* Éléments de fond texturés discrets */}
+        {/* Lueur d'ambiance en arrière-plan */}
         <div
           className="position-absolute rounded-circle"
           style={{
-            width: '450px',
-            height: '450px',
-            background: 'radial-gradient(circle, rgba(0, 210, 106, 0.12) 0%, transparent 70%)',
-            top: '-80px',
-            left: '-80px',
+            width: '420px',
+            height: '420px',
+            background: 'radial-gradient(circle, rgba(0, 210, 106, 0.15) 0%, transparent 70%)',
+            top: '-90px',
+            left: '-90px',
             pointerEvents: 'none',
           }}
         ></div>
 
-        {/* En-tête Brand */}
-        <div className="position-relative z-1">
-          <div className="d-flex align-items-center gap-2 mb-2">
+        {/* En-tête Logo */}
+        <div className="position-relative z-1 d-flex align-items-center justify-content-between mb-3 mb-lg-0">
+          <div className="d-flex align-items-center gap-2">
             <span
-              className="d-inline-flex align-items-center justify-content-center rounded-2 bg-success text-white fw-bold"
+              className="d-inline-flex align-items-center justify-content-center rounded-2 bg-success text-white fw-bold shadow-sm"
               style={{ width: '32px', height: '32px', fontSize: '1rem' }}
             >
               <i className="bi bi-geo-alt-fill"></i>
@@ -38,48 +42,50 @@ function AuthPage({ onLoginSuccess }) {
               VTC<span className="text-success">Express</span>
             </span>
           </div>
-          <span className="badge rounded-pill border border-dark-subtle text-light-emphasis bg-dark px-3 py-1.5 small fw-normal">
-            <span className="d-inline-block rounded-circle bg-success me-1.5" style={{ width: '7px', height: '7px' }}></span>
-            Réseau Actif • Agadir & Région
+
+          <span className="badge rounded-pill border border-dark-subtle text-light-emphasis bg-dark px-2.5 py-1.5 small fw-normal">
+            <span className="d-inline-block rounded-circle bg-success me-1.5" style={{ width: '6px', height: '6px' }}></span>
+            Réseau Urbain
           </span>
         </div>
 
-        {/* Cœur visuel éditorial */}
-        <div className="my-auto py-5 position-relative z-1" style={{ maxWidth: '480px' }}>
-          <h1 className="display-5 fw-bold lh-1 tracking-tight mb-3 text-white">
+        {/* Cœur éditorial avec un peu plus d'ampleur et de hauteur */}
+        <div className="my-auto py-2 py-lg-4 position-relative z-1" style={{ maxWidth: '480px' }}>
+          <h1 className="fw-bold tracking-tight mb-2 mb-lg-3 text-white lh-sm" style={{ fontSize: 'clamp(1.5rem, 4.5vw, 2.5rem)', letterSpacing: '-0.5px' }}>
             Déplacez-vous librement. <br />
             <span className="text-success">Négociez votre tarif.</span>
           </h1>
-          <p className="text-secondary fs-6 leading-relaxed mb-4">
+
+          <p className="text-secondary fs-6 leading-relaxed mb-3 mb-lg-4 d-none d-sm-block">
             L'alternative moderne inspirée d'inDrive et d'Uber. Pour les passagers qui veulent le juste prix et les chauffeurs maîtres de leur activité.
           </p>
 
-          {/* Micro-indicateurs de confiance */}
+          {/* Micro-indicateurs de confiance bien proportionnés */}
           <div className="d-flex gap-4 pt-3 border-top border-dark">
             <div>
-              <div className="fs-4 fw-bold text-white mb-0">100%</div>
-              <div className="text-secondary small">Tarif transparent</div>
+              <div className="fw-bold text-white mb-0" style={{ fontSize: '1.25rem' }}>100%</div>
+              <div className="text-secondary" style={{ fontSize: '0.78rem' }}>Tarif transparent</div>
             </div>
             <div>
-              <div className="fs-4 fw-bold text-white mb-0">Direct</div>
-              <div className="text-secondary small">Chauffeur certifié</div>
+              <div className="fw-bold text-white mb-0" style={{ fontSize: '1.25rem' }}>Direct</div>
+              <div className="text-secondary" style={{ fontSize: '0.78rem' }}>Chauffeur certifié</div>
             </div>
             <div>
-              <div className="fs-4 fw-bold text-white mb-0">24/7</div>
-              <div className="text-secondary small">Disponibilité</div>
+              <div className="fw-bold text-white mb-0" style={{ fontSize: '1.25rem' }}>24/7</div>
+              <div className="text-secondary" style={{ fontSize: '0.78rem' }}>Disponibilité</div>
             </div>
           </div>
         </div>
 
-        {/* Footer Panneau Gauche */}
-        <div className="position-relative z-1 text-secondary small pt-3 d-flex justify-content-between align-items-center">
-          <span>Module Prog. Web Dynamique • S5 IL</span>
-          <span>FSA Agadir</span>
+        {/* Pied de page du panneau sombre (visible sur grand écran) */}
+        <div className="position-relative z-1 text-secondary small pt-3 d-none d-lg-flex justify-content-between align-items-center border-top border-dark">
+          <span>Plateforme de Transport Urbain</span>
+          <span>Version 2.0</span>
         </div>
       </div>
 
-      {/* Panneau Droit : Formulaire d'accès & Connexion (Surface pure, claire et tactile) */}
-      <div className="col-12 col-lg-6 d-flex align-items-center justify-content-center p-4 p-md-5 bg-white">
+      {/* Panneau Droit : Formulaire de connexion / inscription */}
+      <div className="col-12 col-lg-6 d-flex align-items-center justify-content-center p-3 p-sm-4 p-md-5 bg-white flex-grow-1">
         <AuthForm onLoginSuccess={onLoginSuccess} />
       </div>
     </div>

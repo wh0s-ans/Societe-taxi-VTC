@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import Course from '../models/Course';
 
-// Formulaire de réservation interactif, ergonomique et soigné
+// Formulaire de réservation inDrive : Trajet, catégorie de véhicule et négociation de prix
 function DemandeCourseForm({ onDemanderCourse }) {
   const [depart, setDepart] = useState('');
   const [arrivee, setArrivee] = useState('');
@@ -10,17 +10,19 @@ function DemandeCourseForm({ onDemanderCourse }) {
   const [nomClient, setNomClient] = useState('');
   const [telephoneClient, setTelephoneClient] = useState('');
 
-  // Ajustement fin du prix proposé
+  // Ajustement du prix avec boutons plus et moins (style inDrive)
   const modifierPrix = (delta) => {
-    setPrix((prev) => Math.max(10, prev + delta));
+    setPrix((ancienPrix) => Math.max(10, ancienPrix + delta));
   };
 
+  // Recalcule une estimation automatique dès que l'utilisateur choisit un véhicule
   const choisirVehicule = (type) => {
     setTypeVehicule(type);
     const estimation = Course.estimerPrix(6, type);
     setPrix(estimation);
   };
 
+  // Soumission de la demande de course
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!depart.trim() || !arrivee.trim()) return;
@@ -35,29 +37,30 @@ function DemandeCourseForm({ onDemanderCourse }) {
       telephoneClient: telephoneClient.trim() || '0600000000',
     });
 
+    // Réinitialisation du formulaire
     setDepart('');
     setArrivee('');
   };
 
   return (
-    <div className="ui-card p-4 mb-4">
-      <div className="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
-        <h2 className="fs-5 fw-bold mb-0 font-display">Commander un trajet</h2>
-        <span className="text-muted small">Agadir & Régions</span>
-      </div>
+    <div className="card shadow-sm border-0 rounded-4 p-4 bg-white mb-4">
+      <h5 className="fw-bold mb-3 d-flex align-items-center">
+        <i className="bi bi-geo-alt text-success me-2 fs-4"></i>
+        Où souhaitez-vous aller ?
+      </h5>
 
       <form onSubmit={handleSubmit}>
-        {/* Champs de trajet stylisés avec repères visuels */}
+        {/* Champs de trajet Départ / Destination */}
         <div className="mb-3">
-          <label className="form-label text-secondary fw-semibold small mb-1">Point de prise en charge</label>
+          <label className="form-label small fw-semibold text-secondary">Point de départ</label>
           <div className="input-group">
-            <span className="input-group-text bg-white border-end-0 text-success">
-              <span className="route-dot bg-success"></span>
+            <span className="input-group-text bg-light border-end-0 text-success">
+              <i className="bi bi-circle-fill" style={{ fontSize: '0.6rem' }}></i>
             </span>
             <input
               type="text"
-              className="form-control form-control-custom border-start-0"
-              placeholder="Ex: Marina Agadir, Talborjt..."
+              className="form-control bg-light border-start-0"
+              placeholder="Ex: Centre-ville, Gare..."
               value={depart}
               onChange={(e) => setDepart(e.target.value)}
               required
@@ -66,15 +69,15 @@ function DemandeCourseForm({ onDemanderCourse }) {
         </div>
 
         <div className="mb-3">
-          <label className="form-label text-secondary fw-semibold small mb-1">Destination finale</label>
+          <label className="form-label small fw-semibold text-secondary">Destination</label>
           <div className="input-group">
-            <span className="input-group-text bg-white border-end-0 text-danger">
-              <span className="route-dot bg-danger"></span>
+            <span className="input-group-text bg-light border-end-0 text-danger">
+              <i className="bi bi-geo-alt-fill"></i>
             </span>
             <input
               type="text"
-              className="form-control form-control-custom border-start-0"
-              placeholder="Ex: Aéroport Al Massira, Taghazout..."
+              className="form-control bg-light border-start-0"
+              placeholder="Ex: Aéroport, Plage..."
               value={arrivee}
               onChange={(e) => setArrivee(e.target.value)}
               required
@@ -82,50 +85,58 @@ function DemandeCourseForm({ onDemanderCourse }) {
           </div>
         </div>
 
-        {/* Sélection des catégories de véhicules */}
-        <div className="mb-3">
-          <label className="form-label text-secondary fw-semibold small mb-2">Catégorie de véhicule</label>
-          <div className="row g-2">
-            {[
-              { id: 'Standard', label: 'Taxi', sub: 'Éco 1-4', icon: 'bi-taxi-front' },
-              { id: 'Confort', label: 'VTC Berline', sub: 'Confort +', icon: 'bi-car-front-fill' },
-              { id: 'Van', label: 'Van Groupe', sub: 'Jusqu\'à 7', icon: 'bi-truck-front-fill' },
-            ].map((v) => (
-              <div key={v.id} className="col-4">
-                <div
-                  className={`card-vehicule text-center p-2.5 ${typeVehicule === v.id ? 'active' : ''}`}
-                  onClick={() => choisirVehicule(v.id)}
-                  role="button"
-                >
-                  <i className={`bi ${v.icon} fs-4 mb-1 d-block text-dark`}></i>
-                  <div className="fw-bold" style={{ fontSize: '0.85rem' }}>{v.label}</div>
-                  <div className="text-muted" style={{ fontSize: '0.7rem' }}>{v.sub}</div>
-                </div>
-              </div>
-            ))}
+        {/* Sélection des catégories de véhicule */}
+        <label className="form-label small fw-semibold text-secondary mb-2">Type de véhicule</label>
+        <div className="row g-2 mb-3">
+          <div className="col-4">
+            <div
+              className={`card-vehicule text-center p-2 ${typeVehicule === 'Standard' ? 'active' : ''}`}
+              onClick={() => choisirVehicule('Standard')}
+            >
+              <i className="bi bi-taxi-front fs-3 text-dark"></i>
+              <div className="small fw-bold">Taxi</div>
+              <div className="text-muted" style={{ fontSize: '0.75rem' }}>Standard</div>
+            </div>
+          </div>
+          <div className="col-4">
+            <div
+              className={`card-vehicule text-center p-2 ${typeVehicule === 'Confort' ? 'active' : ''}`}
+              onClick={() => choisirVehicule('Confort')}
+            >
+              <i className="bi bi-car-front-fill fs-3 text-dark"></i>
+              <div className="small fw-bold">VTC</div>
+              <div className="text-muted" style={{ fontSize: '0.75rem' }}>Confort</div>
+            </div>
+          </div>
+          <div className="col-4">
+            <div
+              className={`card-vehicule text-center p-2 ${typeVehicule === 'Van' ? 'active' : ''}`}
+              onClick={() => choisirVehicule('Van')}
+            >
+              <i className="bi bi-truck-front-fill fs-3 text-dark"></i>
+              <div className="small fw-bold">Van</div>
+              <div className="text-muted" style={{ fontSize: '0.75rem' }}>Groupe</div>
+            </div>
           </div>
         </div>
 
-        {/* Bloc Tarif & Négociation */}
-        <div className="price-box p-3 mb-3 text-center">
-          <div className="text-secondary small fw-medium mb-1">Votre offre de prix</div>
+        {/* Négociation de prix style inDrive */}
+        <div className="bg-light rounded-4 p-3 mb-3 text-center">
+          <div className="small text-secondary fw-semibold mb-1">Votre proposition de tarif</div>
           <div className="d-flex align-items-center justify-content-center gap-3">
             <button
               type="button"
-              className="btn-price-adjust"
-              aria-label="Diminuer le prix"
+              className="btn btn-outline-secondary rounded-circle"
+              style={{ width: '42px', height: '42px' }}
               onClick={() => modifierPrix(-5)}
             >
               <i className="bi bi-dash-lg"></i>
             </button>
-            <div className="font-display">
-              <span className="fs-2 fw-bold text-dark">{prix}</span>{' '}
-              <span className="text-muted fw-semibold small">MAD</span>
-            </div>
+            <span className="fs-3 fw-bold text-dark">{prix} <small className="fs-6">DH</small></span>
             <button
               type="button"
-              className="btn-price-adjust"
-              aria-label="Augmenter le prix"
+              className="btn btn-outline-secondary rounded-circle"
+              style={{ width: '42px', height: '42px' }}
               onClick={() => modifierPrix(5)}
             >
               <i className="bi bi-plus-lg"></i>
@@ -133,12 +144,12 @@ function DemandeCourseForm({ onDemanderCourse }) {
           </div>
         </div>
 
-        {/* Coordonnées Passager */}
+        {/* Informations de contact du passager */}
         <div className="row g-2 mb-3">
           <div className="col-6">
             <input
               type="text"
-              className="form-control form-control-custom"
+              className="form-control form-control-sm"
               placeholder="Votre Nom"
               value={nomClient}
               onChange={(e) => setNomClient(e.target.value)}
@@ -147,18 +158,17 @@ function DemandeCourseForm({ onDemanderCourse }) {
           <div className="col-6">
             <input
               type="tel"
-              className="form-control form-control-custom"
-              placeholder="Numéro Mobile"
+              className="form-control form-control-sm"
+              placeholder="Téléphone"
               value={telephoneClient}
               onChange={(e) => setTelephoneClient(e.target.value)}
             />
           </div>
         </div>
 
-        {/* Bouton d'action principal */}
-        <button type="submit" className="btn-brand-primary w-100 d-flex align-items-center justify-content-center gap-2">
-          <span>Trouver un chauffeur</span>
-          <i className="bi bi-arrow-right"></i>
+        {/* Bouton de confirmation */}
+        <button type="submit" className="btn btn-indrive w-100 py-3 fs-5 shadow-sm">
+          Trouver un chauffeur
         </button>
       </form>
     </div>
