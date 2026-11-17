@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
-import DemandeCourseForm from './components/DemandeCourseForm';
 import ListeCourses from './components/ListeCourses';
 import AuthPage from './pages/AuthPage';
+import PassagerPage from './pages/PassagerPage';
 import GestionCoursesService from './services/GestionCoursesService';
 import Course from './models/Course';
 import './index.css';
@@ -125,11 +125,17 @@ function App() {
   // SI AUTHENTIFIÉ : Afficher l'application VTC adaptée au rôle
   const estChauffeur = utilisateur.role === 'chauffeur';
 
+  // Vue Passager : flux inDrive complet (formulaire → attente → course)
+  if (!estChauffeur) {
+    return <PassagerPage utilisateur={utilisateur} onDeconnexion={handleDeconnexion} />;
+  }
+
+  // Vue Chauffeur : liste des courses disponibles + assignées
   return (
     <div className="min-vh-100 d-flex flex-column bg-light">
       <Navbar utilisateur={utilisateur} onDeconnexion={handleDeconnexion} />
 
-      <main className="container py-4 flex-grow-1" style={{ maxWidth: '960px' }}>
+      <main className="container py-4 flex-grow-1" style={{ maxWidth: '800px' }}>
         {message && (
           <div className={`alert alert-${message.type} alert-dismissible fade show rounded-4 shadow-sm mb-4`} role="alert">
             <i className="bi bi-info-circle-fill me-2"></i>
@@ -137,31 +143,17 @@ function App() {
           </div>
         )}
 
-        <div className="row g-4">
-          {/* Colonne Formulaire : Uniquement pour le Passager */}
-          {!estChauffeur && (
-            <div className="col-12 col-lg-5">
-              <DemandeCourseForm onDemanderCourse={handleDemanderCourse} />
-            </div>
-          )}
-
-          {/* Colonne Liste des Courses */}
-          <div className={`col-12 ${!estChauffeur ? 'col-lg-7' : 'col-lg-8 mx-auto'}`}>
-            <div className="d-flex justify-content-between align-items-center mb-3">
-              <h5 className="fw-bold mb-0">
-                {estChauffeur ? 'Courses disponibles & assignées' : 'Mes demandes de course'}
-              </h5>
-              <span className="badge bg-secondary rounded-pill">{courses.length}</span>
-            </div>
-
-            <ListeCourses
-              courses={courses}
-              roleActuel={utilisateur.role}
-              onChangerStatut={handleChangerStatut}
-              onSupprimer={handleSupprimer}
-            />
-          </div>
+        <div className="d-flex justify-content-between align-items-center mb-3">
+          <h5 className="fw-bold mb-0">Courses disponibles & assignées</h5>
+          <span className="badge bg-secondary rounded-pill">{courses.length}</span>
         </div>
+
+        <ListeCourses
+          courses={courses}
+          roleActuel={utilisateur.role}
+          onChangerStatut={handleChangerStatut}
+          onSupprimer={handleSupprimer}
+        />
       </main>
     </div>
   );
