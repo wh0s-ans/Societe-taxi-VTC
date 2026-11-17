@@ -1,111 +1,247 @@
+/* ==========================================================================
+   Design System Tokens & Custom Theme
+   Guided by: frontend-design, anti-ai-slop-skills, anti-slop-design
+   ========================================================================== */
+
 :root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+  /* Intentional Color Hierarchy: Deep Obsidian + Emerald Spring + Crisp Alabaster */
+  --font-display: 'Outfit', system-ui, -apple-system, sans-serif;
+  --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
+  --color-obsidian: #0d121c;
+  --color-surface: #ffffff;
+  --color-surface-subtle: #f8fafc;
+  --color-border: #e2e8f0;
+  --color-border-active: #059669;
 
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  --color-brand: #00d26a;
+  --color-brand-deep: #059669;
+  --color-brand-subtle: rgba(0, 210, 106, 0.08);
 
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
-}
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #475569;
+  --color-text-tertiary: #94a3b8;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
+  --radius-card: 16px;
+  --radius-pill: 9999px;
 
-  #social .button-icon {
-    filter: invert(1) brightness(2);
-  }
+  --shadow-subtle: 0 1px 3px rgba(15, 23, 42, 0.04), 0 1px 2px rgba(15, 23, 42, 0.02);
+  --shadow-card: 0 4px 6px -1px rgba(15, 23, 42, 0.04), 0 2px 4px -2px rgba(15, 23, 42, 0.03);
+  --shadow-active: 0 10px 15px -3px rgba(0, 210, 106, 0.12), 0 4px 6px -4px rgba(0, 210, 106, 0.08);
 }
 
 body {
+  background-color: #f8fafc;
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   margin: 0;
+  padding: 0;
 }
 
-#root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
+h1, h2, h3, h4, h5, .font-display {
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
 }
 
-h1,
-h2 {
-  font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
+/* App Navbar / Header */
+.app-header {
+  background-color: var(--color-obsidian);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
-  }
-}
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
-}
-p {
-  margin: 0;
-}
-
-code,
-.counter {
-  font-family: var(--mono);
+.brand-badge {
   display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: rgba(0, 210, 106, 0.15);
+  color: var(--color-brand);
 }
 
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
+.role-switch-container {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-pill);
+  padding: 3px;
+  display: inline-flex;
+  gap: 2px;
+}
+
+.role-btn {
+  border: none;
+  background: transparent;
+  color: #94a3b8;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: var(--radius-pill);
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.role-btn:hover {
+  color: #ffffff;
+}
+
+.role-btn.active {
+  background: var(--color-brand);
+  color: var(--color-obsidian);
+  box-shadow: 0 2px 6px rgba(0, 210, 106, 0.3);
+}
+
+/* Surface Cards */
+.ui-card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-subtle);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.ui-card-interactive:hover {
+  border-color: #cbd5e1;
+  box-shadow: var(--shadow-card);
+}
+
+/* Primary Action Buttons */
+.btn-brand-primary {
+  background-color: var(--color-brand);
+  color: var(--color-obsidian);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.95rem;
+  border: none;
+  border-radius: 12px;
+  padding: 12px 20px;
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  letter-spacing: -0.01em;
+}
+
+.btn-brand-primary:hover {
+  background-color: #00bf60;
+  color: var(--color-obsidian);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 210, 106, 0.25);
+}
+
+.btn-brand-primary:active {
+  transform: translateY(0);
+}
+
+/* Vehicle Selector Cards */
+.card-vehicule {
+  cursor: pointer;
+  border: 1.5px solid var(--color-border);
+  border-radius: 12px;
+  background-color: var(--color-surface);
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+}
+
+.card-vehicule:hover {
+  border-color: #94a3b8;
+  transform: translateY(-2px);
+}
+
+.card-vehicule.active {
+  border-color: var(--color-brand);
+  background-color: var(--color-brand-subtle);
+  box-shadow: 0 0 0 1px var(--color-brand);
+}
+
+/* Price Negotiator Widget */
+.price-box {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+}
+
+.btn-price-adjust {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: var(--color-obsidian);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  transition: all 0.12s ease;
+}
+
+.btn-price-adjust:hover {
+  background: #0f172a;
+  color: #ffffff;
+  border-color: #0f172a;
+}
+
+/* Custom Status Badges (Clear Contrast, No Slop) */
+.badge-status {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.badge-status-attente {
+  background-color: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
+
+.badge-status-acceptee {
+  background-color: #e0f2fe;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+}
+
+.badge-status-cours {
+  background-color: #dcfce7;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
+
+.badge-status-terminee {
+  background-color: #f1f5f9;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+}
+
+.badge-status-annulee {
+  background-color: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+
+/* Minimal Custom Inputs */
+.form-control-custom {
+  background-color: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 0.875rem;
+  padding: 10px 14px;
+  transition: all 0.15s ease;
+}
+
+.form-control-custom:focus {
+  background-color: #ffffff;
+  border-color: var(--color-brand);
+  box-shadow: 0 0 0 3px rgba(0, 210, 106, 0.15);
+  outline: none;
+}
+
+.route-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
 }

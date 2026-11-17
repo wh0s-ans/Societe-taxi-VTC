@@ -1,122 +1,170 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import { useState, useEffect } from 'react';
+import Navbar from './components/Navbar';
+import DemandeCourseForm from './components/DemandeCourseForm';
+import ListeCourses from './components/ListeCourses';
+import AuthPage from './pages/AuthPage';
+import GestionCoursesService from './services/GestionCoursesService';
+import Course from './models/Course';
+import './index.css';
 
+// Composant racine : Gère le cycle de vie de la session et la navigation
 function App() {
-  const [count, setCount] = useState(0)
+  // État de l'utilisateur connecté (null = affiche la Landing/Login Page)
+  const [utilisateur, setUtilisateur] = useState(() => {
+    const sauvegarde = localStorage.getItem('vtc_user');
+    return sauvegarde ? JSON.parse(sauvegarde) : null;
+  });
+
+  const [courses, setCourses] = useState([]);
+  const [message, setMessage] = useState(null);
+
+  // Charger les courses si l'utilisateur est authentifié
+  useEffect(() => {
+    if (utilisateur) {
+      chargerCourses();
+    }
+  }, [utilisateur]);
+
+  // Récupération des courses depuis Laravel ou fallback de démo
+  const chargerCourses = async () => {
+    try {
+      const data = await GestionCoursesService.getToutesCourses();
+      setCourses(data);
+    } catch {
+      setCourses([
+        new Course(1, 'Marina Agadir', 'Souk El Had', 6, 35, 'Standard', 'Sara Alami', '0698765432', 'En attente'),
+        new Course(2, 'Aéroport Agadir Al Massira', 'Taghazout Bay', 42, 280, 'Confort', 'Mehdi Benali', '0612345678', 'En cours', new Date().toISOString(), {
+          nom: 'Karim Tazi',
+          vehicule: 'Dacia Logan - Blanche (12345-A-33)',
+        }),
+      ]);
+    }
+  };
+
+  // Gestion de la connexion réussie
+  const handleLoginSuccess = (donneesUtilisateur) => {
+    setUtilisateur(donneesUtilisateur);
+    localStorage.setItem('vtc_user', JSON.stringify(donneesUtilisateur));
+  };
+
+  // Gestion de la déconnexion
+  const handleDeconnexion = () => {
+    setUtilisateur(null);
+    localStorage.removeItem('vtc_user');
+    localStorage.removeItem('token');
+  };
+
+  const afficherNotification = (texte, type = 'success') => {
+    setMessage({ texte, type });
+    setTimeout(() => setMessage(null), 3500);
+  };
+
+  // Demande de course (rôle Passager)
+  const handleDemanderCourse = async (donneesCourse) => {
+    const courseAvecClient = {
+      ...donneesCourse,
+      nomClient: utilisateur?.nom || donneesCourse.nomClient,
+      telephoneClient: utilisateur?.telephone || donneesCourse.telephoneClient,
+    };
+
+    try {
+      await GestionCoursesService.ajouterCourse(courseAvecClient);
+      chargerCourses();
+    } catch {
+      const nouvelle = new Course(
+        Date.now(),
+        courseAvecClient.depart,
+        courseAvecClient.arrivee,
+        courseAvecClient.distance,
+        courseAvecClient.prix,
+        courseAvecClient.typeVehicule,
+        courseAvecClient.nomClient,
+        courseAvecClient.telephoneClient,
+        'En attente'
+      );
+      setCourses((anciennes) => [nouvelle, ...anciennes]);
+    }
+    afficherNotification('Demande de course envoyée avec succès !');
+  };
+
+  // Changement de statut (rôle Chauffeur)
+  const handleChangerStatut = async (id, nouveauStatut, donneesChauffeur = null) => {
+    const chauffeurInfos = donneesChauffeur || {
+      nom: utilisateur?.nom || 'Chauffeur Partenaire',
+      vehicule: utilisateur?.vehicule || 'Véhicule VTC Partenaire',
+    };
+
+    try {
+      await GestionCoursesService.changerStatutCourse(id, nouveauStatut, chauffeurInfos);
+      chargerCourses();
+    } catch {
+      setCourses((anciennes) =>
+        anciennes.map((c) => (c.id === id ? { ...c, statut: nouveauStatut, chauffeur: chauffeurInfos } : c))
+      );
+    }
+    afficherNotification(`Course mise à jour : Statut "${nouveauStatut}"`);
+  };
+
+  const handleSupprimer = async (id) => {
+    if (!window.confirm('Voulez-vous vraiment annuler cette course ?')) return;
+
+    try {
+      await GestionCoursesService.supprimerCourse(id);
+      chargerCourses();
+    } catch {
+      setCourses((anciennes) => anciennes.filter((c) => c.id !== id));
+    }
+    afficherNotification('Course annulée.', 'warning');
+  };
+
+  // SI NON AUTHENTIFIÉ : Afficher le Split-Layout immersif Welcome / Login / Register
+  if (!utilisateur) {
+    return <AuthPage onLoginSuccess={handleLoginSuccess} />;
+  }
+
+  // SI AUTHENTIFIÉ : Afficher l'application VTC adaptée au rôle
+  const estChauffeur = utilisateur.role === 'chauffeur';
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <div className="min-vh-100 d-flex flex-column bg-light">
+      <Navbar utilisateur={utilisateur} onDeconnexion={handleDeconnexion} />
 
-      <div className="ticks"></div>
+      <main className="container py-4 flex-grow-1" style={{ maxWidth: '960px' }}>
+        {message && (
+          <div className={`alert alert-${message.type} alert-dismissible fade show rounded-4 shadow-sm mb-4`} role="alert">
+            <i className="bi bi-info-circle-fill me-2"></i>
+            {message.texte}
+          </div>
+        )}
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+        <div className="row g-4">
+          {/* Colonne Formulaire : Uniquement pour le Passager */}
+          {!estChauffeur && (
+            <div className="col-12 col-lg-5">
+              <DemandeCourseForm onDemanderCourse={handleDemanderCourse} />
+            </div>
+          )}
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+          {/* Colonne Liste des Courses */}
+          <div className={`col-12 ${!estChauffeur ? 'col-lg-7' : 'col-lg-8 mx-auto'}`}>
+            <div className="d-flex justify-content-between align-items-center mb-3">
+              <h5 className="fw-bold mb-0">
+                {estChauffeur ? 'Courses disponibles & assignées' : 'Mes demandes de course'}
+              </h5>
+              <span className="badge bg-secondary rounded-pill">{courses.length}</span>
+            </div>
+
+            <ListeCourses
+              courses={courses}
+              roleActuel={utilisateur.role}
+              onChangerStatut={handleChangerStatut}
+              onSupprimer={handleSupprimer}
+            />
+          </div>
+        </div>
+      </main>
+    </div>
+  );
 }
 
-export default App
+export default App;
