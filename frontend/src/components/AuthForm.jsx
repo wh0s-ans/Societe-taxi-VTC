@@ -1,72 +1,69 @@
 import { useState } from 'react';
 import Input from './ui/Input';
+import AuthService from '../services/AuthService';
 
-// Formulaire d'authentification inspiré d'inDrive & Uber
-// Connexion simple : Nom d'utilisateur & Mot de passe
-// Inscription : Choix Passager / Chauffeur et création de compte
+// Formulaire d'authentification — connexion username/password ou inscription Passager/Chauffeur
 function AuthForm({ onLoginSuccess }) {
-  const [mode, setMode] = useState('login'); // 'login' (par défaut) ou 'register'
-  const [role, setRole] = useState('client'); // 'client' ou 'chauffeur'
+  const [mode, setMode] = useState('login');
+  const [role, setRole] = useState('client');
 
-  // Identifiants de connexion
-  const [username, setUsername] = useState('');
+  const [username,   setUsername]   = useState('');
   const [motDePasse, setMotDePasse] = useState('');
+  const [nom,        setNom]        = useState('');
+  const [telephone,  setTelephone]  = useState('');
+  const [email,      setEmail]      = useState('');
+  const [permis,     setPermis]     = useState('');
+  const [vehicule,   setVehicule]   = useState('');
 
-  // Données d'inscription (UML)
-  const [nom, setNom] = useState('');
-  const [telephone, setTelephone] = useState('');
-  const [email, setEmail] = useState('');
-  const [permis, setPermis] = useState('');
-  const [vehicule, setVehicule] = useState('');
+  const [erreur,      setErreur]      = useState('');
+  const [chargement,  setChargement]  = useState(false);
 
-  const [erreur, setErreur] = useState('');
-  const [chargement, setChargement] = useState(false);
-
-  // Soumission
-  const handleSubmit = (e) => {
+  /* Soumission : appel réel à l'API Laravel */
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setErreur('');
 
+    /* Validation côté client */
     if (mode === 'login') {
       if (!username.trim() || !motDePasse) {
         setErreur("Veuillez saisir votre nom d'utilisateur et votre mot de passe.");
         return;
       }
-
-      setChargement(true);
-      setTimeout(() => {
-        setChargement(false);
-        onLoginSuccess({
-          username,
-          nom: username,
-          role: 'client',
-        });
-      }, 500);
     } else {
-      // Inscription
       if (!nom.trim() || !username.trim() || !telephone.trim() || !motDePasse) {
         setErreur('Veuillez remplir tous les champs obligatoires.');
         return;
       }
-
       if (role === 'chauffeur' && (!permis.trim() || !vehicule.trim())) {
         setErreur('Veuillez renseigner le permis et le véhicule pour le chauffeur.');
         return;
       }
+    }
 
-      setChargement(true);
-      setTimeout(() => {
-        setChargement(false);
-        onLoginSuccess({
+    setChargement(true);
+    try {
+      let utilisateur;
+
+      if (mode === 'login') {
+        utilisateur = await AuthService.login(username, motDePasse);
+      } else {
+        utilisateur = await AuthService.register({
+          name:      nom,
           username,
-          nom,
+          email:     email || `${username}@vtcexpress.local`,
+          password:  motDePasse,
           telephone,
-          email,
           role,
-          permis: role === 'chauffeur' ? permis : null,
-          vehicule: role === 'chauffeur' ? vehicule : null,
+          permis:   role === 'chauffeur' ? permis   : undefined,
+          vehicule: role === 'chauffeur' ? vehicule : undefined,
         });
-      }, 500);
+      }
+
+      onLoginSuccess(utilisateur);
+    } catch (err) {
+      setErreur(err.message || 'Une erreur est survenue. Vérifiez votre connexion.');
+    } finally {
+      setChargement(false);
     }
   };
 

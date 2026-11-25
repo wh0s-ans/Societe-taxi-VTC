@@ -43,10 +43,7 @@ function AuthPage({ onLoginSuccess }) {
             </span>
           </div>
 
-          <span className="badge rounded-pill border border-dark-subtle text-light-emphasis bg-dark px-2.5 py-1.5 small fw-normal">
-            <span className="d-inline-block rounded-circle bg-success me-1.5" style={{ width: '6px', height: '6px' }}></span>
-            Réseau Urbain
-          </span>
+          
         </div>
 
         {/* Cœur éditorial avec un peu plus d'ampleur et de hauteur */}

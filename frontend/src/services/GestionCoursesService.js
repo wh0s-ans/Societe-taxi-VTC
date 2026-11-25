@@ -1,85 +1,105 @@
-// Configuration de base de l'URL de l'API Laravel
+// Service API Course — Délégué à 100% au backend Laravel
 const API_URL = 'http://localhost:8000/api';
 
-// Service API Course : Délégué à 100% au backend Laravel
 class GestionCoursesService {
-  // Récupère les en-têtes HTTP avec le token d'authentification éventuel
+
+  /* En-têtes avec token Sanctum */
   static getHeaders() {
     const token = localStorage.getItem('token');
     return {
       'Content-Type': 'application/json',
       Accept: 'application/json',
-      ...(token && { Authorization: `Bearer ${token}` }),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     };
   }
 
-  // CREATE : Envoie une nouvelle demande de course au backend Laravel
+  /* Lève une erreur lisible à partir d'une réponse Laravel */
+  static async lireErreur(response) {
+    try {
+      const data = await response.json();
+      return data?.message || `Erreur ${response.status}`;
+    } catch {
+      return `Erreur ${response.status}`;
+    }
+  }
+
+  /* CREATE : Nouvelle demande de course */
   static async ajouterCourse(donnees) {
     const response = await fetch(`${API_URL}/courses`, {
       method: 'POST',
       headers: this.getHeaders(),
-      body: JSON.stringify(donnees),
+      body: JSON.stringify({
+        depart:        donnees.depart,
+        arrivee:       donnees.arrivee || donnees.destination,
+        distance:      donnees.distance ?? 5,
+        prix:          donnees.prix,
+        type_vehicule: donnees.typeVehicule || donnees.type_vehicule || 'Standard',
+      }),
     });
-    if (!response.ok) throw new Error('Erreur lors de la création de la course');
+    if (!response.ok) throw new Error(await this.lireErreur(response));
     return await response.json();
   }
 
-  // READ : Récupère la liste des courses depuis la base de données via Laravel
+  /* READ : Liste des courses (filtrée par rôle côté backend) */
   static async getToutesCourses() {
-    const response = await fetch(`${API_URL}/courses`, {
-      headers: this.getHeaders(),
-    });
-    if (!response.ok) throw new Error('Erreur lors de la récupération des courses');
+    const response = await fetch(`${API_URL}/courses`, { headers: this.getHeaders() });
+    if (!response.ok) throw new Error(await this.lireErreur(response));
     return await response.json();
   }
 
-  // READ : Récupère une course spécifique par son identifiant
+  /* READ : Détail d'une course */
   static async getCourseParId(id) {
-    const response = await fetch(`${API_URL}/courses/${id}`, {
-      headers: this.getHeaders(),
-    });
+    const response = await fetch(`${API_URL}/courses/${id}`, { headers: this.getHeaders() });
     if (!response.ok) throw new Error('Course non trouvée');
     return await response.json();
   }
 
-  // UPDATE : Met à jour les informations d'une course
-  static async modifierCourse(id, donneesModifiees) {
+  /* UPDATE : Modification du prix (négociation inDrive) */
+  static async modifierCourse(id, donnees) {
     const response = await fetch(`${API_URL}/courses/${id}`, {
-      method: 'PUT',
+      method: 'PATCH',
       headers: this.getHeaders(),
-      body: JSON.stringify(donneesModifiees),
+      body: JSON.stringify(donnees),
     });
-    if (!response.ok) throw new Error('Erreur lors de la mise à jour de la course');
+    if (!response.ok) throw new Error(await this.lireErreur(response));
     return await response.json();
   }
 
-  // UPDATE : Change le statut de la course (accepter, démarrer, terminer)
-  static async changerStatutCourse(id, statut, donneesChauffeur = null) {
+  /* UPDATE STATUT : Acceptée / En cours / Terminée / Annulée */
+  static async changerStatutCourse(id, statut) {
     const response = await fetch(`${API_URL}/courses/${id}/statut`, {
       method: 'PATCH',
       headers: this.getHeaders(),
-      body: JSON.stringify({ statut, ...donneesChauffeur }),
+      body: JSON.stringify({ statut }),
     });
-    if (!response.ok) throw new Error('Erreur lors du changement de statut');
+    if (!response.ok) throw new Error(await this.lireErreur(response));
     return await response.json();
   }
 
-  // DELETE : Supprime ou annule une course dans la base de données
+  /* DELETE : Annulation / suppression d'une course */
   static async supprimerCourse(id) {
     const response = await fetch(`${API_URL}/courses/${id}`, {
       method: 'DELETE',
       headers: this.getHeaders(),
     });
-    if (!response.ok) throw new Error('Erreur lors de la suppression');
+    if (!response.ok) throw new Error(await this.lireErreur(response));
     return await response.json();
   }
 
-  // STATISTIQUES : Récupère les statistiques calculées par Laravel
-  static async getStatistiques() {
-    const response = await fetch(`${API_URL}/statistiques`, {
+  /* ESTIMATION : Prix calculé par le backend selon le tarif et la distance */
+  static async estimerPrix(distance, typeVehicule) {
+    const params = new URLSearchParams({ distance, type_vehicule: typeVehicule });
+    const response = await fetch(`${API_URL}/tarifs/estimer?${params}`, {
       headers: this.getHeaders(),
     });
-    if (!response.ok) throw new Error('Erreur lors de la récupération des statistiques');
+    if (!response.ok) throw new Error('Erreur estimation prix');
+    return await response.json(); // { prix_estime, type_vehicule }
+  }
+
+  /* STATISTIQUES : Tableau de bord admin */
+  static async getStatistiques() {
+    const response = await fetch(`${API_URL}/statistiques`, { headers: this.getHeaders() });
+    if (!response.ok) throw new Error(await this.lireErreur(response));
     return await response.json();
   }
 }

@@ -245,3 +245,192 @@ h1, h2, h3, h4, h5, .font-display {
   border-radius: 50%;
   display: inline-block;
 }
+
+/* ==========================================================================
+   Passager Light Workspace — Linear / Stripe Precision Aesthetic
+   ========================================================================== */
+.passager-shell {
+  background-color: #f8fafc;
+  color: #0a0f1a;
+  min-height: 100vh;
+}
+
+.passager-nav {
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid #e5e7eb;
+  position: sticky;
+  top: 0;
+  z-index: 30;
+}
+
+.passager-panel {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  box-shadow: 0 1px 2px rgba(10, 15, 26, 0.03);
+}
+
+.passager-route-box {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  transition: border-color 0.18s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.passager-route-box:focus-within {
+  border-color: #0a0f1a;
+  box-shadow: 0 0 0 3px rgba(10, 15, 26, 0.06);
+}
+
+.passager-veh-btn {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  color: #334155;
+  cursor: pointer;
+  transition:
+    transform 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.16s ease,
+    background-color 0.16s ease,
+    box-shadow 0.16s ease;
+}
+
+.passager-veh-btn:hover {
+  border-color: #cbd5e1;
+  background: #f8fafc;
+  transform: translateY(-1px);
+}
+
+.passager-veh-btn:active {
+  transform: scale(0.97);
+}
+
+.passager-veh-btn.is-active {
+  background: #0a0f1a;
+  border-color: #0a0f1a;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(10, 15, 26, 0.12);
+}
+
+.passager-swap-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  background: #f8fafc;
+  color: #475569;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1), background-color 0.15s ease, color 0.15s ease;
+}
+
+.passager-swap-btn:hover {
+  background: #0a0f1a;
+  color: #ffffff;
+  border-color: #0a0f1a;
+}
+
+.passager-swap-btn:active {
+  transform: rotate(180deg) scale(0.92);
+}
+
+.passager-stepper-btn {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #0a0f1a;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s cubic-bezier(0.22, 1, 0.36, 1), background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.passager-stepper-btn:hover:not(:disabled) {
+  background: #0a0f1a;
+  border-color: #0a0f1a;
+  color: #ffffff;
+}
+
+.passager-stepper-btn:active:not(:disabled) {
+  transform: scale(0.93);
+}
+
+.passager-cta {
+  background: #0a0f1a;
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), background-color 0.16s ease, box-shadow 0.2s ease;
+}
+
+.passager-cta:hover:not(:disabled) {
+  background: #162032;
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px -4px rgba(10, 15, 26, 0.22);
+}
+
+.passager-cta:active:not(:disabled) {
+  transform: scale(0.985);
+}
+
+.passager-cta:disabled {
+  background: #e2e8f0;
+  color: #94a3b8;
+  cursor: not-allowed;
+}
+
+.passager-quick-row {
+  transition: background-color 0.15s ease, transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+  cursor: pointer;
+}
+
+.passager-quick-row:hover {
+  background-color: #f8fafc;
+}
+
+.passager-quick-row:active {
+  transform: scale(0.992);
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+.font-mono-label {
+  font-family: var(--font-mono);
+}
+
+@keyframes passager-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.passager-animate-in {
+  animation: passager-enter 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes passager-radar {
+  0% {
+    transform: translate(-50%, -50%) scale(0.75);
+    opacity: 0.7;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1.55);
+    opacity: 0;
+  }
+}
