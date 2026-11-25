@@ -1,5 +1,12 @@
+import { useState } from 'react';
+import CasablancaMap from './CasablancaMap';
+
 // Carte Course : présentation hiérarchique, contrastée et sans éléments superflus
 function CarteCourse({ course, roleActuel, onChangerStatut, onSupprimer }) {
+  const [voirCarte, setVoirCarte] = useState(false);
+  const aCoordonnees = Boolean(
+    course.depart_lat && course.depart_lon && course.arrivee_lat && course.arrivee_lon
+  );
   const getBadgeConfig = (statut) => {
     switch (statut) {
       case 'En attente':
@@ -71,6 +78,24 @@ function CarteCourse({ course, roleActuel, onChangerStatut, onSupprimer }) {
             Chauffeur : {course.chauffeur.nom}
           </div>
           <div className="text-secondary">{course.chauffeur.vehicule}</div>
+        </div>
+      )}
+
+      {aCoordonnees && (
+        <div className="mb-3">
+          <button
+            type="button"
+            className="btn btn-outline-secondary btn-sm w-100 rounded-3 d-flex align-items-center justify-content-center gap-2"
+            onClick={() => setVoirCarte((v) => !v)}
+          >
+            <i className={`bi ${voirCarte ? 'bi-eye-slash' : 'bi-map'}`}></i>
+            <span>{voirCarte ? "Masquer l'itinéraire" : "Voir l'itinéraire sur la carte"}</span>
+          </button>
+          {voirCarte && (
+            <div className="mt-2">
+              <CasablancaMap readOnlyRoute={course} height="210px" />
+            </div>
+          )}
         </div>
       )}
 

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Course from '../models/Course';
 import GestionCoursesService from '../services/GestionCoursesService';
+import CasablancaMap from '../components/CasablancaMap';
 
 /* Catégories de véhicules avec icônes vectorielles et délai estimé */
 const TYPES_VEHICULE = [
@@ -9,16 +10,6 @@ const TYPES_VEHICULE = [
   { id: 'Confort',  label: 'Confort',  icone: 'bi-gem',         eta: '5 min', capacite: 'Berline' },
   { id: 'Van',      label: 'Van',      icone: 'bi-bus-front',   eta: '7 min', capacite: '6 places' },
 ];
-
-/* Trajets fréquents avec distance estimée pour pré-remplissage rapide */
-const TRAJETS_FREQUENTS = [
-  { nom: 'Centre Commercial', zone: 'Centre-ville',   distance: 3.2, icone: 'bi-bag' },
-  { nom: 'Gare Routière',     zone: 'Pôle transport', distance: 5.8, icone: 'bi-train-front' },
-  { nom: 'Hôpital Régional',  zone: 'Secteur Santé',  distance: 7.1, icone: 'bi-hospital' },
-  { nom: 'Aéroport',          zone: 'Terminal 1',     distance: 18.5, icone: 'bi-airplane' },
-];
-
-const DISTANCES_PRESETS = [2, 5, 10, 20];
 
 /* ─── Barre de navigation supérieure (Light) ───────────────────────── */
 function NavbarLight({ utilisateur, onDeconnexion }) {
@@ -137,15 +128,33 @@ function FormulaireCourse({
 }) {
   const [depart, setDepart] = useState('');
   const [destination, setDestination] = useState('');
-  const [distance, setDistance] = useState(5);
+  const [coords, setCoords] = useState({ depart_lat: null, depart_lon: null, arrivee_lat: null, arrivee_lon: null });
+  const [distance, setDistance] = useState(null);
+  const [dureeMin, setDureeMin] = useState(null);
   const [typeVehicule, setTypeVehicule] = useState('Standard');
   const [prixEstime, setPrixEstime] = useState(35);
   const [prixOffre, setPrixOffre] = useState(35);
   const [calculEnCours, setCalculEnCours] = useState(false);
   const [erreur, setErreur] = useState('');
 
+  /* Réception de l'itinéraire OSRM + adresses Nominatim depuis CasablancaMap */
+  const handleRouteChange = useCallback((route) => {
+    setDepart(route.depart_adresse || '');
+    setDestination(route.arrivee_adresse || '');
+    setCoords({
+      depart_lat: route.depart_lat,
+      depart_lon: route.depart_lon,
+      arrivee_lat: route.arrivee_lat,
+      arrivee_lon: route.arrivee_lon,
+    });
+    setDistance(route.distance_km);
+    setDureeMin(route.duree_min);
+    setErreur('');
+  }, []);
+
   /* Récupère le tarif conseillé depuis l'API Laravel (/api/tarifs/estimer) */
   useEffect(() => {
+    if (!distance) return undefined;
     let actif = true;
     const calculer = async () => {
       setCalculEnCours(true);
@@ -170,35 +179,24 @@ function FormulaireCourse({
     return () => { actif = false; };
   }, [distance, typeVehicule]);
 
-  const inverserTrajet = () => {
-    setDepart(destination);
-    setDestination(depart);
-  };
-
-  const remplirDestination = (item) => {
-    if (!depart.trim()) {
-      setDepart(item.nom);
-    } else {
-      setDestination(item.nom);
-      setDistance(item.distance);
-    }
-    setErreur('');
-  };
-
   const ajusterPrix = (delta) => {
     setPrixOffre((p) => Math.max(10, p + delta));
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!depart.trim() || !destination.trim()) {
-      setErreur('Indiquez un point de départ et une destination pour continuer.');
+    if (!depart.trim() || !destination.trim() || !distance) {
+      setErreur('Placez le départ (A) et la destination (B) sur la carte de Casablanca.');
       return;
     }
     setErreur('');
     onValider({
       depart: depart.trim(),
       destination: destination.trim(),
+      depart_lat: coords.depart_lat,
+      depart_lon: coords.depart_lon,
+      arrivee_lat: coords.arrivee_lat,
+      arrivee_lon: coords.arrivee_lon,
       distance,
       typeVehicule,
       prix: prixOffre,
@@ -206,41 +204,54 @@ function FormulaireCourse({
   };
 
   const ecartPrix = prixOffre - prixEstime;
-  const pret = depart.trim().length > 0 && destination.trim().length > 0;
+  const pret = Boolean(depart.trim() && destination.trim() && distance);
   const prenom = utilisateur?.nom?.split(' ')[0] || utilisateur?.username || 'Passager';
+
+  /* Extraction des lieux uniques avec coordonnées GPS depuis l'historique des courses */
+  const lieuxRecents = [];
+  const dejaVus = new Set();
+  for (const c of coursesHistorique) {
+    const candidats = [
+      { label: c.arrivee, lat: Number(c.arrivee_lat), lon: Number(c.arrivee_lon) },
+      { label: c.depart, lat: Number(c.depart_lat), lon: Number(c.depart_lon) },
+    ];
+    for (const lieu of candidats) {
+      if (lieu.label && !Number.isNaN(lieu.lat) && !Number.isNaN(lieu.lon) && lieu.lat !== 0 && lieu.lon !== 0) {
+        const cle = lieu.label.trim().toLowerCase();
+        if (!dejaVus.has(cle)) {
+          dejaVus.add(cle);
+          lieuxRecents.push(lieu);
+        }
+      }
+      if (lieuxRecents.length >= 6) break;
+    }
+    if (lieuxRecents.length >= 6) break;
+  }
 
   return (
     <div className="container-fluid px-3 px-lg-4 py-4 passager-animate-in" style={{ maxWidth: '1120px' }}>
       <div className="row g-4 align-items-start">
 
-        {/* Colonne Principale : Saisie trajet & négociation */}
+        {/* Colonne Principale : Carte Casablanca + négociation */}
         <div className="col-12 col-lg-7">
           <div className="mb-3">
             <h1 className="font-display fw-bold mb-1" style={{ fontSize: '1.55rem', color: '#0a0f1a' }}>
               Commander un trajet, {prenom}
             </h1>
             <p className="mb-0 small" style={{ color: '#525e70' }}>
-              Saisissez votre itinéraire, consultez l'estimation du tarif et proposez votre prix.
+              Cliquez sur la carte de Casablanca pour placer le départ (A) et l'arrivée (B), puis négociez votre tarif.
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="passager-panel p-3 p-sm-4">
-            {/* 1. Itinéraire (Départ + Destination avec rail vertical) */}
-            <div className="d-flex align-items-center justify-content-between mb-2">
-              <label className="small fw-semibold" style={{ color: '#0a0f1a' }}>Itinéraire</label>
-              <button
-                type="button"
-                className="passager-swap-btn"
-                onClick={inverserTrajet}
-                title="Inverser départ et destination"
-              >
-                <i className="bi bi-arrow-down-up" style={{ fontSize: '0.78rem' }}></i>
-              </button>
+            {/* 1. Carte interactive (Photon + Nominatim + OSRM) */}
+            <div className="mb-3">
+              <CasablancaMap onRouteChange={handleRouteChange} raccourcis={lieuxRecents} height="360px" />
             </div>
 
+            {/* Résumé des adresses sélectionnées sur la carte */}
             <div className="passager-route-box mb-3">
-              {/* Départ */}
-              <div className="d-flex align-items-center px-3 py-2 gap-3" style={{ minHeight: '48px' }}>
+              <div className="d-flex align-items-center px-3 py-2 gap-3" style={{ minHeight: '44px' }}>
                 <span
                   className="flex-shrink-0"
                   style={{
@@ -251,90 +262,46 @@ function FormulaireCourse({
                     boxShadow: '0 0 0 3px rgba(0, 200, 100, 0.16)',
                   }}
                 />
-                <input
-                  type="text"
-                  className="bg-transparent border-0 w-100"
-                  placeholder="Point de départ (ex: Gare Routière)"
-                  value={depart}
-                  onChange={(e) => { setDepart(e.target.value); setErreur(''); }}
-                  style={{ outline: 'none', fontSize: '0.92rem', color: '#0a0f1a' }}
-                />
-                {depart && (
-                  <button
-                    type="button"
-                    className="btn btn-sm p-0 border-0 text-secondary"
-                    onClick={() => setDepart('')}
-                    aria-label="Effacer le départ"
-                  >
-                    <i className="bi bi-x-lg" style={{ fontSize: '0.75rem' }}></i>
-                  </button>
-                )}
+                <span className="small text-truncate" style={{ color: depart ? '#0a0f1a' : '#94a3b8' }}>
+                  {depart || 'Départ (A) — cliquez sur la carte'}
+                </span>
               </div>
 
               <div style={{ height: '1px', background: '#f1f5f9', marginLeft: '40px' }} />
 
-              {/* Destination */}
-              <div className="d-flex align-items-center px-3 py-2 gap-3" style={{ minHeight: '48px' }}>
+              <div className="d-flex align-items-center px-3 py-2 gap-3" style={{ minHeight: '44px' }}>
                 <span
                   className="flex-shrink-0"
                   style={{
                     width: '9px',
                     height: '9px',
                     borderRadius: '2px',
-                    background: '#0a0f1a',
+                    background: '#e11d48',
                   }}
                 />
-                <input
-                  type="text"
-                  className="bg-transparent border-0 w-100"
-                  placeholder="Destination (ex: Centre Commercial)"
-                  value={destination}
-                  onChange={(e) => { setDestination(e.target.value); setErreur(''); }}
-                  style={{ outline: 'none', fontSize: '0.92rem', color: '#0a0f1a' }}
-                />
-                {destination && (
-                  <button
-                    type="button"
-                    className="btn btn-sm p-0 border-0 text-secondary"
-                    onClick={() => setDestination('')}
-                    aria-label="Effacer la destination"
-                  >
-                    <i className="bi bi-x-lg" style={{ fontSize: '0.75rem' }}></i>
-                  </button>
-                )}
+                <span className="small text-truncate" style={{ color: destination ? '#0a0f1a' : '#94a3b8' }}>
+                  {destination || 'Arrivée (B) — cliquez sur la carte'}
+                </span>
               </div>
             </div>
 
-            {/* Distance estimée interactive (sans carte) */}
-            <div className="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-4 pb-3" style={{ borderBottom: '1px solid #f1f5f9' }}>
-              <div className="d-flex align-items-center gap-2">
-                <i className="bi bi-signpost-split text-secondary" style={{ fontSize: '0.85rem' }}></i>
-                <span className="small" style={{ color: '#525e70' }}>Distance estimée</span>
-                <span className="font-mono-label fw-semibold small px-2 py-0" style={{ background: '#f1f5f9', borderRadius: '6px', color: '#0a0f1a' }}>
-                  {distance} km
-                </span>
+            {/* Distance & durée exactes OSRM */}
+            {distance && (
+              <div className="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-4 pb-3" style={{ borderBottom: '1px solid #f1f5f9' }}>
+                <div className="d-flex align-items-center gap-2">
+                  <i className="bi bi-signpost-split text-primary" style={{ fontSize: '0.85rem' }}></i>
+                  <span className="small" style={{ color: '#525e70' }}>Itinéraire OSRM</span>
+                  <span className="font-mono-label fw-semibold small px-2 py-0" style={{ background: '#f1f5f9', borderRadius: '6px', color: '#0a0f1a' }}>
+                    {distance} km
+                  </span>
+                </div>
+                {dureeMin && (
+                  <span className="font-mono-label small px-2 py-0" style={{ background: 'rgba(0, 200, 100, 0.1)', borderRadius: '6px', color: '#047857', fontWeight: 600 }}>
+                    ~{dureeMin} min estimées
+                  </span>
+                )}
               </div>
-              <div className="d-flex gap-1">
-                {DISTANCES_PRESETS.map((km) => (
-                  <button
-                    key={km}
-                    type="button"
-                    onClick={() => setDistance(km)}
-                    className="btn btn-sm font-mono-label"
-                    style={{
-                      fontSize: '0.74rem',
-                      padding: '3px 9px',
-                      borderRadius: '6px',
-                      border: distance === km ? '1px solid #0a0f1a' : '1px solid #e2e8f0',
-                      background: distance === km ? '#0a0f1a' : '#ffffff',
-                      color: distance === km ? '#ffffff' : '#525e70',
-                    }}
-                  >
-                    {km} km
-                  </button>
-                ))}
-              </div>
-            </div>
+            )}
 
             {/* 2. Sélecteur de véhicule */}
             <div className="mb-4">
@@ -461,46 +428,12 @@ function FormulaireCourse({
                 </>
               ) : (
                 <>
-                  <span>{pret ? `Trouver un chauffeur · ${prixOffre} DH` : 'Renseignez votre trajet'}</span>
+                  <span>{pret ? `Trouver un chauffeur · ${prixOffre} DH` : 'Placez A et B sur la carte'}</span>
                   {pret && <i className="bi bi-arrow-right"></i>}
                 </>
               )}
             </button>
           </form>
-
-          {/* Suggestions rapides */}
-          <div className="mt-3 passager-panel overflow-hidden">
-            <div className="px-3 py-2 d-flex align-items-center justify-content-between" style={{ borderBottom: '1px solid #f1f5f9', background: '#f8fafc' }}>
-              <span className="small fw-semibold" style={{ color: '#475569', fontSize: '0.78rem' }}>
-                Destinations fréquentes
-              </span>
-              <span className="small" style={{ color: '#94a3b8', fontSize: '0.74rem' }}>
-                Cliquer pour remplir
-              </span>
-            </div>
-            {TRAJETS_FREQUENTS.map((item, idx) => (
-              <div
-                key={item.nom}
-                className="passager-quick-row d-flex align-items-center gap-3 px-3 py-2"
-                style={{ borderBottom: idx < TRAJETS_FREQUENTS.length - 1 ? '1px solid #f1f5f9' : 'none' }}
-                onClick={() => remplirDestination(item)}
-              >
-                <span
-                  className="d-inline-flex align-items-center justify-content-center flex-shrink-0"
-                  style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#f1f5f9', color: '#0a0f1a' }}
-                >
-                  <i className={`bi ${item.icone}`} style={{ fontSize: '0.85rem' }}></i>
-                </span>
-                <div className="flex-grow-1 min-w-0">
-                  <div className="fw-medium small text-truncate" style={{ color: '#0a0f1a' }}>{item.nom}</div>
-                  <div style={{ fontSize: '0.74rem', color: '#64748b' }}>{item.zone}</div>
-                </div>
-                <span className="font-mono-label small" style={{ color: '#475569', fontSize: '0.75rem' }}>
-                  {item.distance} km
-                </span>
-              </div>
-            ))}
-          </div>
         </div>
 
         {/* Colonne Secondaire : Historique & courses actives (API Laravel) */}
@@ -872,7 +805,11 @@ function PassagerPage({ utilisateur, onDeconnexion }) {
     try {
       const creee = await GestionCoursesService.ajouterCourse({
         depart: donnees.depart,
+        depart_lat: donnees.depart_lat,
+        depart_lon: donnees.depart_lon,
         arrivee: donnees.destination,
+        arrivee_lat: donnees.arrivee_lat,
+        arrivee_lon: donnees.arrivee_lon,
         distance: donnees.distance,
         prix: donnees.prix,
         typeVehicule: donnees.typeVehicule,

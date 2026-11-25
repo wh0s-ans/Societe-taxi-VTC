@@ -30,7 +30,11 @@ class GestionCoursesService {
       headers: this.getHeaders(),
       body: JSON.stringify({
         depart:        donnees.depart,
+        depart_lat:    donnees.depart_lat ?? null,
+        depart_lon:    donnees.depart_lon ?? null,
         arrivee:       donnees.arrivee || donnees.destination,
+        arrivee_lat:   donnees.arrivee_lat ?? null,
+        arrivee_lon:   donnees.arrivee_lon ?? null,
         distance:      donnees.distance ?? 5,
         prix:          donnees.prix,
         type_vehicule: donnees.typeVehicule || donnees.type_vehicule || 'Standard',

@@ -40,7 +40,11 @@ class CourseController extends Controller
     {
         $request->validate([
             'depart'        => 'required|string|max:200',
+            'depart_lat'    => 'nullable|numeric|between:-90,90',
+            'depart_lon'    => 'nullable|numeric|between:-180,180',
             'arrivee'       => 'required|string|max:200',
+            'arrivee_lat'   => 'nullable|numeric|between:-90,90',
+            'arrivee_lon'   => 'nullable|numeric|between:-180,180',
             'distance'      => 'required|numeric|min:0',
             'prix'          => 'required|numeric|min:0',
             'type_vehicule' => 'required|in:Standard,Moto,Confort,Van',
@@ -49,7 +53,11 @@ class CourseController extends Controller
         $course = Course::create([
             'client_id'     => $request->user()->id,
             'depart'        => $request->depart,
+            'depart_lat'    => $request->depart_lat,
+            'depart_lon'    => $request->depart_lon,
             'arrivee'       => $request->arrivee,
+            'arrivee_lat'   => $request->arrivee_lat,
+            'arrivee_lon'   => $request->arrivee_lon,
             'distance'      => $request->distance,
             'prix'          => $request->prix,
             'type_vehicule' => $request->type_vehicule,
